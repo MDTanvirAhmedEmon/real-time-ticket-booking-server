@@ -12,14 +12,20 @@ const app: Application = express()
 
 
 const httpServer = createServer(app);
-const io = new Server(httpServer);
+const io = new Server(httpServer, {
+  cors: {
+    origin: ['http://10.0.60.168:3000'],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 // initialChats(io)
 initialBooking(io)
-app.set("io",io)
+app.set("io", io)
 
 // parser
 app.use(express.json())
-app.use(cors())
+app.use(cors({ origin: 'http://10.0.60.168:3000', credentials: true })); // Adjust the origin as needed
 app.use(cookieParser());
 app.use('/api/v1', router)
 
