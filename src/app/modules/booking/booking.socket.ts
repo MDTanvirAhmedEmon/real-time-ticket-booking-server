@@ -29,7 +29,7 @@ const initialBooking = (io: Server) => {
             const parsedData = JSON.parse(bookingData);
             const busId = parsedData.bus;
             await bookingServices.createBooking(parsedData)
-            const seats = await bookingServices.getAllUnavailableSeatsOfaBus(parsedData);
+            const seats = await bookingServices.getSocketAllUnavailableSeatsOfaBus(parsedData);
             bookingNamespace.to(busId).emit('busSeatsUpdated', seats);
         });
 
