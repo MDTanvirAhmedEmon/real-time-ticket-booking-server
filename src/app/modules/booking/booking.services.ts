@@ -27,7 +27,7 @@ const createBooking = async (data: IBooking): Promise<any> => {
 
 const getAllUnavailableSeatsOfaBus = async (busId: any): Promise<any> => {
     console.log('service', busId);
-    const LOCK_DURATION_MINUTES = 8;
+    const LOCK_DURATION_MINUTES = 11;
     const expiryDate = new Date(Date.now() - LOCK_DURATION_MINUTES * 60 * 1000);
 
     console.log('Current Date:', new Date());
@@ -79,7 +79,7 @@ const getAllUnavailableSeatsOfaBus = async (busId: any): Promise<any> => {
 
 const getSocketAllUnavailableSeatsOfaBus = async (busData: any): Promise<any> => {
     console.log('service', busData?.bus);
-    const LOCK_DURATION_MINUTES = 8;
+    const LOCK_DURATION_MINUTES = 11;
     const expiryDate = new Date(Date.now() - LOCK_DURATION_MINUTES * 60 * 1000);
 
     console.log('Current Date:', new Date());
