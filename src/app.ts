@@ -14,7 +14,7 @@ const app: Application = express()
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: ['http://10.0.60.168:3000'],
+    origin: ['*', 'http://10.0.60.168:3000', 'http://10.0.60.168:3001'],
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -25,7 +25,7 @@ app.set("io", io)
 
 // parser
 app.use(express.json())
-app.use(cors({ origin: 'http://10.0.60.168:3000', credentials: true })); // Adjust the origin as needed
+app.use(cors({ origin: ['*', 'http://10.0.60.168:3000', 'http://10.0.60.168:3001'] })); // Adjust the origin as needed
 app.use(cookieParser());
 app.use('/api/v1', router)
 
