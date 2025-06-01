@@ -8,7 +8,7 @@ const createCustomer = async (validateUserInfo: Partial<IUser>, validateCustomer
     const userData = {
         email: validateUserInfo?.email,
         password: validateUserInfo?.password,
-        role: "customer",
+        role: "user",
         status: 'in-progress',
     }
     const isExist = await User.findOne({ email: userData.email })
@@ -18,7 +18,6 @@ const createCustomer = async (validateUserInfo: Partial<IUser>, validateCustomer
     }
 
     const result = await User.create(userData);
-    console.log('result', result)
 
     if (result?._id) {
         validateCustomerData.user = result?._id

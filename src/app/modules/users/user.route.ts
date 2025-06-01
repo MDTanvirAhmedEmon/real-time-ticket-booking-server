@@ -5,7 +5,7 @@ import { customerController } from "./user.controller";
 
 const router = Router();
 
-router.post('/create-customer',
+router.post('/create-user',
     // validateRequest(userValidationSchema),
      customerController.createCustomer)
 
