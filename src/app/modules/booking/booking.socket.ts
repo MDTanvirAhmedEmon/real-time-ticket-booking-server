@@ -18,13 +18,13 @@ const initialBooking = (io: Server) => {
         // })
 
         socket.on('joinBusRoom', (busId) => {
-            console.log(`Socket ${socket.id} joined bus room: ${busId}`);
+            // console.log(`Socket ${socket.id} joined bus room: ${busId}`);
             const parsedData = JSON.parse(busId);
             socket.join(parsedData?.bus);
         });
 
         socket.on('createBooking', async (bookingData) => {
-            console.log('bookingData', bookingData);
+            // console.log('bookingData', bookingData);
 
             const parsedData = JSON.parse(bookingData);
             const busId = parsedData.bus;

@@ -1,6 +1,7 @@
+import AppError from "../../errors/AppError";
 import { IBooking } from "./booking.interface";
 import { Booking } from "./booking.model";
-import { ObjectId } from "mongodb";
+// import { ObjectId } from "mongodb";
 
 const createBooking = async (data: IBooking): Promise<any> => {
     // console.log('Booking',data);
@@ -9,7 +10,17 @@ const createBooking = async (data: IBooking): Promise<any> => {
         user: data.user,
         seat: data.seat,
     })
-    console.log("existingBooking", existingBooking);
+    const bookedBySomeone = await Booking.findOne({
+        bus: data.bus,
+        seat: data.seat,
+    })
+
+    // If seat is booked by someone else (not the current user)
+    if (bookedBySomeone && String(bookedBySomeone.user) !== String(data.user)) {
+        throw new AppError(400, 'Already Locked By Someone😶‍🌫️');
+    }
+
+
     if (!existingBooking) {
         data.locked = true;
         data.payment = false;
@@ -26,12 +37,12 @@ const createBooking = async (data: IBooking): Promise<any> => {
 }
 
 const getAllUnavailableSeatsOfaBus = async (busId: any): Promise<any> => {
-    console.log('service', busId);
+    // console.log('service', busId);
     const LOCK_DURATION_MINUTES = 11;
     const expiryDate = new Date(Date.now() - LOCK_DURATION_MINUTES * 60 * 1000);
 
-    console.log('Current Date:', new Date());
-    console.log('Expiry Date (5 minutes ago):', expiryDate.toISOString());
+    // console.log('Current Date:', new Date());
+    // console.log('Expiry Date (5 minutes ago):', expiryDate.toISOString());
     const updatedBooking = await Booking.deleteMany(
         {
             bus: busId,
@@ -78,12 +89,12 @@ const getAllUnavailableSeatsOfaBus = async (busId: any): Promise<any> => {
 
 
 const getSocketAllUnavailableSeatsOfaBus = async (busData: any): Promise<any> => {
-    console.log('service', busData?.bus);
+    // console.log('service', busData?.bus);
     const LOCK_DURATION_MINUTES = 11;
     const expiryDate = new Date(Date.now() - LOCK_DURATION_MINUTES * 60 * 1000);
 
-    console.log('Current Date:', new Date());
-    console.log('Expiry Date (5 minutes ago):', expiryDate.toISOString());
+    // console.log('Current Date:', new Date());
+    // console.log('Expiry Date (5 minutes ago):', expiryDate.toISOString());
     const updatedBooking = await Booking.deleteMany(
         {
             bus: busData?.bus,
@@ -93,7 +104,7 @@ const getSocketAllUnavailableSeatsOfaBus = async (busData: any): Promise<any> =>
         }
     );
 
-    console.log(`Unlocked expired and unpaid seats.${updatedBooking}`);
+    // console.log(`Unlocked expired and unpaid seats.${updatedBooking}`);
 
     const result = await Booking.aggregate([
         { $match: { bus: busData?.bus, locked: true } }, // Only locked seats
