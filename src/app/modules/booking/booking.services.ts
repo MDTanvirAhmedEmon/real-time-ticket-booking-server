@@ -99,93 +99,66 @@ const createTransactionBooking = async (data: IBooking): Promise<any> => {
     }
 };
 
-// const MAX_RETRIES = 2;
 
-// const createTransactionMaxBooking = async (data: IBooking): Promise<any> => {
-//   let retries = 0;
+const createTransactionMaxBooking = async (data: IBooking): Promise<any> => {
+    const session = await mongoose.startSession();
 
-//   while (retries < MAX_RETRIES) {
-//     const session = await mongoose.startSession();
+    try {
+        session.startTransaction();
 
-//     try {
-//       session.startTransaction();
+        // Check if seat is already booked by someone else
+        const existingBooking = await Booking.findOne(
+            { bus: data.bus, seat: data.seat },
+            null,
+            { session }
+        );
 
-//       // Check if seat is booked by someone else
-//       const bookedBySomeone = await Booking.findOne(
-//         { bus: data.bus, seat: data.seat },
-//         null,
-//         { session }
-//       );
+        if (existingBooking && String(existingBooking.user) !== String(data.user)) {
+            await session.abortTransaction();
+            session.endSession();
+            return { message: 'Someone Locked Before You! 😶‍🌫️', bookedBySomeone: existingBooking };
+        }
 
-//       if (bookedBySomeone && String(bookedBySomeone.user) !== String(data.user)) {
-//         await session.abortTransaction();
-//         session.endSession();
-//         return { message: 'Someone Locked Before You! 😶‍🌫️', bookedBySomeone };
-//       }
+        // Use findOneAndUpdate for atomic operation
+        const result = await Booking.findOneAndUpdate(
+            { bus: data.bus, user: data.user, seat: data.seat },
+            { 
+                $setOnInsert: { 
+                    ...data, 
+                    locked: true, 
+                    payment: false 
+                }
+            },
+            { 
+                upsert: true, 
+                new: true, 
+                session,
+                setDefaultsOnInsert: true
+            }
+        );
 
-//       // Check if this user already booked the seat
-//       const existingBooking = await Booking.findOne(
-//         { bus: data.bus, user: data.user, seat: data.seat },
-//         null,
-//         { session }
-//       );
+        // If user wants to toggle off (booking exists), delete it
+        if (!result.isNew) {
+            await Booking.deleteOne(
+                { bus: data.bus, user: data.user, seat: data.seat },
+                { session }
+            );
+        }
 
-//       let result;
+        await session.commitTransaction();
+        session.endSession();
 
-//       if (!existingBooking) {
-//         // Use findOneAndUpdate with upsert inside transaction
-//         result = await Booking.findOneAndUpdate(
-//           { bus: data.bus, seat: data.seat },
-//           {
-//             $setOnInsert: {
-//               bus: data.bus,
-//               user: data.user,
-//               seat: data.seat,
-//               locked: true,
-//               payment: false,
-//             },
-//           },
-//           {
-//             new: true,
-//             upsert: true,
-//             session,
-//           }
-//         );
-
-//         // If booked by someone else after this, reject
-//         if (result.user.toString() !== data.user.toString()) {
-//           await session.abortTransaction();
-//           session.endSession();
-//           return { message: 'Someone Locked Before You! 😶‍🌫️', bookedBySomeone: result };
-//         }
-//       } else {
-//         // Delete booking (toggle off)
-//         await Booking.deleteOne(
-//           { bus: data.bus, user: data.user, seat: data.seat },
-//           { session }
-//         );
-//       }
-
-//       await session.commitTransaction();
-//       session.endSession();
-
-//       return result;
-//     } catch (error: any) {
-//       await session.abortTransaction();
-//       session.endSession();
-
-//       if (error.code === 11000) {
-//         // Duplicate key error - retry
-//         retries++;
-//         if (retries === MAX_RETRIES) {
-//           return { message: 'Someone Locked Before You! 😶‍🌫️' };
-//         }
-//       } else {
-//         throw error;
-//       }
-//     }
-//   }
-// };
+        return result;
+    } catch (error: any) {
+        await session.abortTransaction();
+        session.endSession();
+        
+        if (error.code === 11000) {
+            return { message: 'Someone Locked Before You! 😶‍🌫️' };
+        }
+        throw error;
+    }
+};
 
 const getAllUnavailableSeatsOfaBus = async (busId: any): Promise<any> => {
     // console.log('service', busId);
@@ -288,7 +261,7 @@ const getSocketAllUnavailableSeatsOfaBus = async (busData: any): Promise<any> =>
 export const bookingServices = {
     createBooking,
     createTransactionBooking,
-    // createTransactionMaxBooking,
+    createTransactionMaxBooking,
     getAllUnavailableSeatsOfaBus,
     getSocketAllUnavailableSeatsOfaBus,
 }
