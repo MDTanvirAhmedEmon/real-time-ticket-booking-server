@@ -81,7 +81,6 @@ const createTransactionBooking = async (data: IBooking): Promise<any> => {
         { bus: data.bus, user: data.user, seat: data.seat },
         { session }
       );
-      result = { message: 'Booking cancelled successfully' };
     }
 
     await session.commitTransaction();
