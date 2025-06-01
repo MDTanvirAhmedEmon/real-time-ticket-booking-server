@@ -15,10 +15,15 @@ const createBooking = async (data: IBooking): Promise<any> => {
         seat: data.seat,
     })
 
+    console.log('bookedby someone', bookedBySomeone);
+
     // If seat is booked by someone else (not the current user)
     if (bookedBySomeone && String(bookedBySomeone.user) !== String(data.user)) {
-        throw new AppError(400, 'Already Locked By Someone😶‍🌫️');
+        return { message: 'Already Locked By Someone😶‍🌫️',bookedBySomeone };
     }
+    // if (bookedBySomeone && String(bookedBySomeone.user) !== String(data.user)) {
+    //     return bookedBySomeone
+    // }
 
 
     if (!existingBooking) {

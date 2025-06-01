@@ -28,9 +28,14 @@ const initialBooking = (io: Server) => {
 
             const parsedData = JSON.parse(bookingData);
             const busId = parsedData.bus;
-            await bookingServices.createBooking(parsedData)
+            const result = await bookingServices.createBooking(parsedData)
+            console.log('my result', result);
             const seats = await bookingServices.getSocketAllUnavailableSeatsOfaBus(parsedData);
-            bookingNamespace.to(busId).emit('busSeatsUpdated', seats);
+            const payload = result?.message
+                ? { ...seats, message: result.message, lockedBeforeYou: result?.bookedBySomeone }
+                : seats;
+            bookingNamespace.to(busId).emit('busSeatsUpdated', payload);
+
         });
 
         socket.on('disconnect', () => {
