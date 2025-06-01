@@ -26,8 +26,11 @@ const bookingSchema: Schema<IBooking> = new Schema({
     //     unique: true,
     //     ref: 'User',
     // }
-}, {
-    timestamps: true
-});
+},
+    {
+        timestamps: true
+    });
+
+bookingSchema.index({ bus: 1, seat: 1 }, { unique: true });
 
 export const Booking = model<IBooking>('Booking', bookingSchema);
