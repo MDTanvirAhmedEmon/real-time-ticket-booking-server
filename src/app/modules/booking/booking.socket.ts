@@ -28,7 +28,8 @@ const initialBooking = (io: Server) => {
 
             const parsedData = JSON.parse(bookingData);
             const busId = parsedData.bus;
-            const result = await bookingServices.createBooking(parsedData)
+            // const result = await bookingServices.createBooking(parsedData)
+            const result = await bookingServices.createTransactionBooking(parsedData)
             console.log('my result', result);
             const seats = await bookingServices.getSocketAllUnavailableSeatsOfaBus(parsedData);
             const payload = result?.message
