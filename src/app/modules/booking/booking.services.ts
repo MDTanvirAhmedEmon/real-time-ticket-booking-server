@@ -99,7 +99,7 @@ const createTransactionBooking = async (data: IBooking): Promise<any> => {
     }
 };
 
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 2;
 
 const createTransactionMaxBooking = async (data: IBooking): Promise<any> => {
   let retries = 0;
@@ -164,7 +164,6 @@ const createTransactionMaxBooking = async (data: IBooking): Promise<any> => {
           { bus: data.bus, user: data.user, seat: data.seat },
           { session }
         );
-        result = { message: 'Booking cancelled successfully' };
       }
 
       await session.commitTransaction();
