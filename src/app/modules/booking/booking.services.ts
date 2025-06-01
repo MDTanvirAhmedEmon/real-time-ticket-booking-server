@@ -1,7 +1,7 @@
-import AppError from "../../errors/AppError";
 import { IBooking } from "./booking.interface";
 import { Booking } from "./booking.model";
 // import { ObjectId } from "mongodb";
+import mongoose from 'mongoose';
 
 const createBooking = async (data: IBooking): Promise<any> => {
     // console.log('Booking',data);
@@ -19,7 +19,7 @@ const createBooking = async (data: IBooking): Promise<any> => {
 
     // If seat is booked by someone else (not the current user)
     if (bookedBySomeone && String(bookedBySomeone.user) !== String(data.user)) {
-        return { message: 'Already Locked By Someone😶‍🌫️',bookedBySomeone };
+        return { message: 'Someone Locked Before You! 😶‍🌫️',bookedBySomeone };
     }
     // if (bookedBySomeone && String(bookedBySomeone.user) !== String(data.user)) {
     //     return bookedBySomeone
@@ -40,6 +40,61 @@ const createBooking = async (data: IBooking): Promise<any> => {
         })
     }
 }
+
+const createTransactionBooking = async (data: IBooking): Promise<any> => {
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    // Check if seat is booked by someone else
+    const bookedBySomeone = await Booking.findOne(
+      { bus: data.bus, seat: data.seat },
+      null,
+      { session }
+    );
+
+    if (bookedBySomeone && String(bookedBySomeone.user) !== String(data.user)) {
+      // Abort transaction and return error message
+      await session.abortTransaction();
+      session.endSession();
+      return { message: 'Someone Locked Before You! 😶‍🌫️', bookedBySomeone };
+    }
+
+    // Check if this user already booked the seat
+    const existingBooking = await Booking.findOne(
+      { bus: data.bus, user: data.user, seat: data.seat },
+      null,
+      { session }
+    );
+
+    let result;
+
+    if (!existingBooking) {
+      // Create booking
+      data.locked = true;
+      data.payment = false;
+      result = await Booking.create([data], { session }); // create with session
+    } else {
+      // Delete booking (toggle off)
+      await Booking.deleteOne(
+        { bus: data.bus, user: data.user, seat: data.seat },
+        { session }
+      );
+      result = { message: 'Booking cancelled successfully' };
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    // If created, result is an array (because create with array), get first element
+    return Array.isArray(result) ? result[0] : result;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error; // or handle error as needed
+  }
+};
 
 const getAllUnavailableSeatsOfaBus = async (busId: any): Promise<any> => {
     // console.log('service', busId);
@@ -141,6 +196,7 @@ const getSocketAllUnavailableSeatsOfaBus = async (busData: any): Promise<any> =>
 
 export const bookingServices = {
     createBooking,
+    createTransactionBooking,
     getAllUnavailableSeatsOfaBus,
     getSocketAllUnavailableSeatsOfaBus,
 }
